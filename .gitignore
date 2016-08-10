@@ -1,0 +1,4 @@
+tinyb/.gradle
+*.iml
+tinyb/.idea
+tinyb/build

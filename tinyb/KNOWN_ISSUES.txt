@@ -1,0 +1,3 @@
+Known Issues:
+
+On 64-bit Linux the application might crash. Cause of the crash is libgio-2.0.so.

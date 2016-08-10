@@ -1,0 +1,57 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+// Set maven repository
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+// Set source and target to Java 8
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
+
+dependencies {
+    compile files('lib/natj-api.jar')
+}
+
+task processClasses << {
+    javaexec {
+        main = "org.moe.natj.processor.Main"
+        classpath = files('lib/natj-processor.jar')
+
+        args "-i", "build/raw_classes/main"
+        args "-o", "build/classes/main"
+        args "-gen_cxx_source", "build/natj_cxx_stub.cpp"
+        args "-m", "c++"
+
+        standardOutput = System.out
+        errorOutput = System.out
+    }
+    exec {
+        executable = 'gcc'
+
+        args "-shared", "-fPIC", "-std=c++11"
+        args "-Iinclude", "-Iapi"
+        if ("32".equals(System.getProperty("sun.arch.data.model"))) {
+            args "-Lnatives/i686-pc-linux-gnu"
+        } else {
+            args "-Lnatives/x86_64-unknown-linux-gnu"
+        }
+        args "build/natj_cxx_stub.cpp"
+        args "-o", "natives/libtinyb-java.so"
+        args "-lstdc++", "-ltinyb"
+
+        standardOutput = System.out
+        errorOutput = System.out
+    }
+    sourceSets.main.output.classesDir = 'build/classes/main'
+}
+tasks.processClasses.dependsOn(classes)
+tasks.build.dependsOn(processClasses)
+
+compileJava {
+    doFirst {
+        sourceSets.main.output.classesDir = 'build/raw_classes/main'
+    }
+}
